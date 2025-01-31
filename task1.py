@@ -2,6 +2,7 @@ import networkx as nx
 import random
 import matplotlib.pyplot as plt
 from collections import deque
+import heapq
 
 # Завдання 1: Створення соціального графа
 
@@ -84,16 +85,42 @@ print(f"Шлях BFS від {start_person} до {goal_person}: {bfs_path}")
 for edge in edges:
     G[edge[0]][edge[1]]['weight'] = random.randint(1, 10)  # випадкові ваги від 1 до 10
 
-# Реалізація алгоритму Дейкстри для знаходження найкоротшого шляху між усіма вершинами
-dijkstra_paths = dict(nx.all_pairs_dijkstra_path(G, weight='weight'))
-dijkstra_lengths = dict(nx.all_pairs_dijkstra_path_length(G, weight='weight'))
 
+def dijkstra(graph, start):
+    distances = {node: float('inf') for node in graph.nodes}
+    distances[start] = 0
+    priority_queue = [(0, start)]
+    previous_nodes = {node: None for node in graph.nodes}
+    
+    while priority_queue:
+        current_distance, current_node = heapq.heappop(priority_queue)
+        
+        for neighbor in graph.neighbors(current_node):
+            weight = graph[current_node][neighbor]['weight']
+            distance = current_distance + weight
+            if distance < distances[neighbor]:
+                distances[neighbor] = distance
+                previous_nodes[neighbor] = current_node
+                heapq.heappush(priority_queue, (distance, neighbor))
+    
+    return distances, previous_nodes
+
+def shortest_path_dijkstra(previous_nodes, start, goal):
+    path = []
+    current = goal
+    while current is not None:
+        path.insert(0, current)
+        current = previous_nodes[current]
+    return path if path[0] == start else None
+
+# Виконання алгоритму Дейкстри для кожної вершини
 print("\nНайкоротші шляхи між усіма вершинами (Дейкстра):")
-
 for start in people:
+    distances, previous_nodes = dijkstra(G, start)
     for goal in people:
         if start != goal:
-            print(f"{start} -> {goal}: {dijkstra_paths[start][goal]} (Довжина: {dijkstra_lengths[start][goal]})")
+            path = shortest_path_dijkstra(previous_nodes, start, goal)
+            print(f"{start} -> {goal}: {path} (Довжина: {distances[goal]})")
 
 # Візуалізація графа
 
